@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#d71920">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Viabana Stock">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="./viabana-stock-192.png">
+  <link rel="apple-touch-icon" href="./viabana-stock-192.png">
+  <title>Viabana Stock</title>
+  <style>
+    html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#fff8e8;font-family:Arial,sans-serif}
+    #app {border:0;width:100%;height:100%;display:block;background:#fff}
+    #fallback {display:none;padding:24px;text-align:center}
+    #fallback a {display:inline-block;background:#d71920;color:white;padding:14px 20px;border-radius:12px;text-decoration:none;font-weight:bold}
+  </style>
+</head>
+<body>
+  <iframe id="app" src="https://script.google.com/macros/s/AKfycbyjo4bf1wh9O1J73NFW1vvPHC0YAWOa7fY8NM8mydzLFqipRI9rEDI1ty1FJNx9RZS5mw/exec" allow="camera; clipboard-read; clipboard-write"></iframe>
+  <div id="fallback">
+    <h2>Viabana Stock</h2>
+    <p>Si la aplicación no se muestra, abrila desde este botón.</p>
+    <a href="https://script.google.com/macros/s/AKfycbyjo4bf1wh9O1J73NFW1vvPHC0YAWOa7fY8NM8mydzLFqipRI9rEDI1ty1FJNx9RZS5mw/exec" target="_blank" rel="noopener">Abrir Viabana Stock</a>
+  </div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+</body>
+</html>
