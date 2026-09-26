@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prueba de voz - Viabana</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #fff8e8;
+      color: #333;
+    }
+
+    .contenedor {
+      max-width: 600px;
+      margin: 30px auto;
+    }
+
+    .cabecera {
+      background: linear-gradient(135deg, #d71920, #ed1c24);
+      color: white;
+      padding: 25px 20px;
+      border-radius: 20px 20px 0 0;
+      text-align: center;
+      border-bottom: 6px solid #ffd400;
+    }
+
+    .cabecera h1 {
+      margin: 0 0 5px;
+      font-size: 28px;
+    }
+
+    .cabecera p {
+      margin: 0;
+    }
+
+    .tarjeta {
+      background: white;
+      padding: 25px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.12);
+      text-align: center;
+    }
+
+    #botonVoz {
+      width: 100%;
+      border: 0;
+      border-radius: 15px;
+      padding: 18px;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #ffd400;
+      color: #333;
+    }
+
+    #botonVoz.escuchando {
+      background: #d71920;
+      color: white;
+    }
+
+    #estado {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #fff4c2;
+      font-weight: bold;
+    }
+
+    .resultado {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    #texto {
+      min-height: 100px;
+      padding: 15px;
+      background: #f7f7f7;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .ayuda {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+  <div class="cabecera">
+    <h1>🎤 Viabana</h1>
+    <p>Prueba de carga de productos por voz</p>
+  </div>
+
+  <div class="tarjeta">
+
+    <button id="botonVoz" type="button">
+      🎤 Empezar a dictar
+    </button>
+
+    <div id="estado">
+      Micrófono listo para probar
+    </div>
+
+    <div class="resultado">
+      <strong>Lo que escuché:</strong>
+      <div id="texto">Todavía no hay ningún dictado.</div>
+    </div>
+
+    <div class="ayuda">
+      Para esta prueba podés decir, por ejemplo:<br><br>
+      <strong>
+        "Dos granizados, un chocolate y tres dulce de leche granizado"
+      </strong>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const boton = document.getElementById("botonVoz");
+  const estado = document.getElementById("estado");
+  const texto = document.getElementById("texto");
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  let reconocimiento = null;
+  let escuchando = false;
+
+  if (!SpeechRecognition) {
+    boton.disabled = true;
+    estado.textContent =
+      "Este navegador no permite reconocimiento de voz.";
+  } else {
+
+    reconocimiento = new SpeechRecognition();
+
+    reconocimiento.lang = "es-AR";
+    reconocimiento.continuous = false;
+    reconocimiento.interimResults = true;
+
+    reconocimiento.onstart = function () {
+      escuchando = true;
+
+      boton.textContent = "⏹️ Terminar dictado";
+      boton.classList.add("escuchando");
+
+      estado.textContent =
+        "🔴 Escuchando... hablá ahora.";
+
+      texto.textContent = "";
+    };
+
+    reconocimiento.onresult = function (event) {
+
+      let resultado = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        resultado += event.results[i][0].transcript;
+      }
+
+      texto.textContent = resultado;
+    };
+
+    reconocimiento.onerror = function (event) {
+
+      escuchando = false;
+
+      boton.textContent = "🎤 Volver a intentar";
+      boton.classList.remove("escuchando");
+
+      let mensaje = "No pude escuchar correctamente.";
+
+      if (event.error === "not-allowed") {
+        mensaje =
+          "El navegador no tiene permiso para usar el micrófono.";
+      }
+
+      if (event.error === "no-speech") {
+        mensaje =
+          "No detecté voz. Probá nuevamente hablando cerca del micrófono.";
+      }
+
+      estado.textContent = "⚠️ " + mensaje;
+    };
+
+    reconocimiento.onend = function () {
+
+      escuchando = false;
+
+      boton.textContent = "🎤 Dictar nuevamente";
+      boton.classList.remove("escuchando");
+
+      if (texto.textContent.trim() !== "") {
+        estado.textContent =
+          "✅ Dictado recibido correctamente.";
+      }
+    };
+
+    boton.addEventListener("click", function () {
+
+      if (!reconocimiento) return;
+
+      if (escuchando) {
+        reconocimiento.stop();
+        return;
+      }
+
+      try {
+        reconocimiento.start();
+      } catch (error) {
+        estado.textContent =
+          "⚠️ No se pudo iniciar el micrófono. Probá nuevamente.";
+      }
+
+    });
+  }
+</script>
+
+</body>
+</html>
