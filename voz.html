@@ -68,6 +68,8 @@ function enviarAApp(texto) {
   }
 }
 
+let detenerPorUsuario = false;
+
 function dictar() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const estado = document.getElementById('estado');
@@ -79,58 +81,88 @@ function dictar() {
     return;
   }
 
+  // Si ya está escuchando, este toque significa TERMINAR Y CARGAR.
   if (reconocimiento) {
+    detenerPorUsuario = true;
+    estado.textContent = '⏳ Terminando dictado...';
     try { reconocimiento.stop(); } catch(e) {}
     return;
   }
 
   textoFinal = '';
-  reconocimiento = new SR();
-  reconocimiento.lang = 'es-AR';
-  reconocimiento.continuous = true;
-  reconocimiento.interimResults = true;
+  detenerPorUsuario = false;
 
-  reconocimiento.onstart = function() {
-    btn.classList.add('escuchando');
-    btn.textContent = '⏹️ Terminar y cargar';
-    estado.textContent = '🔴 Escuchando...';
-    texto.textContent = '...';
-  };
+  function iniciarReconocimiento() {
+    reconocimiento = new SR();
+    reconocimiento.lang = 'es-AR';
+    reconocimiento.continuous = true;
+    reconocimiento.interimResults = true;
 
-  reconocimiento.onresult = function(event) {
-    let parcial = '';
-    let final = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) final += t + ' ';
-      else parcial += t;
-    }
-    if (final) textoFinal += final;
-    texto.textContent = (textoFinal + parcial).trim() || '...';
-  };
+    reconocimiento.onstart = function() {
+      btn.classList.add('escuchando');
+      btn.textContent = '⏹️ Terminar y cargar';
+      estado.textContent = '🔴 Escuchando... podés dictar varios productos.';
+      if (!textoFinal) texto.textContent = '...';
+    };
 
-  reconocimiento.onerror = function(event) {
-    let msg = '⚠️ No pude escuchar bien. Probá nuevamente.';
-    if (event.error === 'not-allowed') msg = '⚠️ El micrófono está bloqueado para esta página.';
-    if (event.error === 'no-speech') msg = '⚠️ No escuché voz. Probá nuevamente hablando cerca del micrófono.';
-    estado.textContent = msg;
-  };
+    reconocimiento.onresult = function(event) {
+      let parcial = '';
+      let nuevoFinal = '';
 
-  reconocimiento.onend = function() {
-    const recibido = (textoFinal || texto.textContent || '').trim();
-    btn.classList.remove('escuchando');
-    btn.textContent = '🎤 Dictar nuevamente';
-    reconocimiento = null;
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const parte = event.results[i][0].transcript;
+        if (event.results[i].isFinal) nuevoFinal += parte + ' ';
+        else parcial += parte;
+      }
 
-    if (recibido && recibido !== '...' && recibido !== '—') {
-      texto.textContent = recibido;
-      estado.textContent = '✅ Dictado recibido correctamente.';
-      enviarAApp(recibido);
-    }
-  };
+      if (nuevoFinal) textoFinal += nuevoFinal;
+      texto.textContent = (textoFinal + parcial).trim() || '...';
+    };
 
-  reconocimiento.start();
+    reconocimiento.onerror = function(event) {
+      if (event.error === 'not-allowed') {
+        detenerPorUsuario = true;
+        estado.textContent = '⚠️ El micrófono está bloqueado para esta página.';
+      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        estado.textContent = '⚠️ Hubo un corte de audio. Voy a seguir escuchando.';
+      }
+    };
+
+    reconocimiento.onend = function() {
+      // Chrome puede cortar solo después de una pausa. Si el usuario NO tocó
+      // "Terminar y cargar", reiniciamos y seguimos acumulando el dictado.
+      if (!detenerPorUsuario) {
+        reconocimiento = null;
+        estado.textContent = '🔴 Sigo escuchando...';
+        setTimeout(function() {
+          if (!detenerPorUsuario) {
+            try { iniciarReconocimiento(); } catch(e) {}
+          }
+        }, 180);
+        return;
+      }
+
+      const recibido = (textoFinal || texto.textContent || '').trim();
+
+      btn.classList.remove('escuchando');
+      btn.textContent = '🎤 Dictar nuevamente';
+      reconocimiento = null;
+
+      if (recibido && recibido !== '...' && recibido !== '—') {
+        texto.textContent = recibido;
+        estado.textContent = '✅ Dictado completo recibido. Enviando a la app...';
+        enviarAApp(recibido);
+      } else {
+        estado.textContent = '⚠️ No escuché productos. Probá nuevamente.';
+      }
+    };
+
+    reconocimiento.start();
+  }
+
+  iniciarReconocimiento();
 }
+
 </script>
 </body>
 </html>
