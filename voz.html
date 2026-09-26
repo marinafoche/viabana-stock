@@ -87,12 +87,12 @@ function dictar() {
   textoFinal = '';
   reconocimiento = new SR();
   reconocimiento.lang = 'es-AR';
-  reconocimiento.continuous = false;
+  reconocimiento.continuous = true;
   reconocimiento.interimResults = true;
 
   reconocimiento.onstart = function() {
     btn.classList.add('escuchando');
-    btn.textContent = '⏹️ Terminar dictado';
+    btn.textContent = '⏹️ Terminar y cargar';
     estado.textContent = '🔴 Escuchando...';
     texto.textContent = '...';
   };
