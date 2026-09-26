@@ -46,8 +46,14 @@ function enviarAApp(texto) {
   if (!texto) return;
   try {
     if (window.opener && !window.opener.closed) {
+      const parametros = new URLSearchParams(window.location.search);
+      const modo = parametros.get('modo');
+      const tipoMensaje = modo === 'ingreso'
+        ? 'VIABANA_VOZ_INGRESO'
+        : 'VIABANA_VOZ_SALIDA';
+
       window.opener.postMessage({
-        tipo: 'VIABANA_VOZ_SALIDA',
+        tipo: tipoMensaje,
         texto: texto
       }, '*');
       document.getElementById('estado').innerHTML =
